@@ -53,7 +53,7 @@ class BuildingFloorSerializer(serializers.ModelSerializer):
         fields = ['id', 'name', 'level', 'classrooms']
 
 class TeacherSerializer(serializers.ModelSerializer):
-    department = serializers.PrimaryKeyRelatedField(queryset=Department.objects.all())
+    department = SimpleDepartmentSerializer(read_only=True)
     classroom_assigned = SimpleClassroomSerializer(read_only=True) 
 
     class Meta:
@@ -62,9 +62,8 @@ class TeacherSerializer(serializers.ModelSerializer):
 
 
 class ClassroomSerializer(serializers.ModelSerializer):
-    floor = serializers.PrimaryKeyRelatedField(queryset=BuildingFloor.objects.all())
-    teacher = serializers.PrimaryKeyRelatedField(queryset=Teacher.objects.all(), allow_null=True)
-
+    floor = SimpleBuildingFloorSerializer(read_only=True)
+    teacher = SimpleTeacherSerializer(read_only=True)
     students = SimpleStudentSerializer(many=True, read_only=True)
 
     class Meta:
@@ -72,27 +71,40 @@ class ClassroomSerializer(serializers.ModelSerializer):
         fields = ['id', 'name', 'floor', 'teacher', 'students']
 
 class SubjectSerializer(serializers.ModelSerializer):
-    students_enrolled = SimpleStudentSerializer(many=True, read_only=True)
+
+    primary_students = SimpleStudentSerializer(many=True, read_only=True) 
     marks = serializers.StringRelatedField(many=True, read_only=True) 
 
     class Meta:
         model = Subject
-        fields = ['id', 'name', 'students_enrolled', 'marks']
+        fields = ['id', 'name', 'primary_students', 'marks']
 
 class StudentSerializer(serializers.ModelSerializer):
-    classroom = serializers.PrimaryKeyRelatedField(queryset=Classroom.objects.all())
-    subjects = serializers.PrimaryKeyRelatedField(queryset=Subject.objects.all(), many=True, required=False)
-    friends = serializers.PrimaryKeyRelatedField(queryset=Student.objects.all(), many=True, required=False)
+    classroom = SimpleClassroomSerializer(read_only=True)
+    
+ 
+    primary_subject = SimpleSubjectSerializer(read_only=True) 
 
+    primary_subject_id = serializers.PrimaryKeyRelatedField(
+        queryset=Subject.objects.all(),
+        source='primary_subject',
+        write_only=True,         
+        allow_null=True          
+    )
+    
+   
+    
+    friends = SimpleStudentSerializer(many=True, read_only=True)
     marks = serializers.StringRelatedField(many=True, read_only=True)
 
     class Meta:
         model = Student
-        fields = ['id', 'name', 'classroom', 'subjects', 'friends', 'marks']
+       
+        fields = ['id', 'name', 'classroom', 'primary_subject', 'primary_subject_id', 'friends', 'marks']
 
 class MarkSerializer(serializers.ModelSerializer):
-    student = serializers.PrimaryKeyRelatedField(queryset=Student.objects.all())
-    subject = serializers.PrimaryKeyRelatedField(queryset=Subject.objects.all())
+    student = SimpleStudentSerializer(read_only=True)
+    subject = SimpleSubjectSerializer(read_only=True)
 
     class Meta:
         model = Mark

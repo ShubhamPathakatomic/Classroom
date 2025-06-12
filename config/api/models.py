@@ -44,8 +44,16 @@ class Subject(models.Model):
 
 class Student(models.Model):
     name = models.CharField(max_length=100, unique=True)
+    
     classroom = models.ForeignKey(Classroom, on_delete=models.CASCADE, related_name='students')
-    subjects = models.ManyToManyField(Subject, related_name='students_enrolled', blank=True)
+    
+
+    primary_subject = models.ForeignKey(
+        Subject,
+        on_delete=models.SET_NULL, 
+        null=True, blank=True,    
+        related_name='primary_students' 
+    )
     friends = models.ManyToManyField('self', symmetrical=True, blank=True)
 
     def __str__(self):
