@@ -1,1 +1,1 @@
-test 213423
+print("hello")
